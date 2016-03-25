@@ -1,5 +1,7 @@
 package com.google.vrtoolkit.cardboard.samples.treasurehunt;
 
+import android.opengl.GLES20;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -14,16 +16,8 @@ public class Cube {
   private FloatBuffer mColorBuffer;
   private ByteBuffer mIndexBuffer;
 
-  private float vertices[] = {
-      -1.0f, -1.0f, -1.0f,
-      1.0f, -1.0f, -1.0f,
-      1.0f,  1.0f, -1.0f,
-      -1.0f, 1.0f, -1.0f,
-      -1.0f, -1.0f,  1.0f,
-      1.0f, -1.0f,  1.0f,
-      1.0f,  1.0f,  1.0f,
-      -1.0f,  1.0f,  1.0f
-  };
+  private float vertices[] = {};
+
   private float colors[] = {
       0.0f,  1.0f,  0.0f,  1.0f,
       0.0f,  1.0f,  0.0f,  1.0f,
@@ -44,7 +38,21 @@ public class Cube {
       3, 0, 1, 3, 1, 2
   };
 
-  public Cube() {
+  public Cube(float x, float y, float z, float width,
+              float height, float depth) {
+
+    vertices = new float[]{
+        x,         y,          z,
+        x + width, y,          z,
+        x + width, y + height, z,
+        x,         y + height, z,
+        x,         y,           z + depth,
+        x + width, y,           z + depth,
+        x + width, y + height,  z + depth,
+        x,         y + height,  z + depth
+    };
+
+
     ByteBuffer byteBuf = ByteBuffer.allocateDirect(vertices.length * 4);
     byteBuf.order(ByteOrder.nativeOrder());
     mVertexBuffer = byteBuf.asFloatBuffer();
@@ -62,19 +70,23 @@ public class Cube {
     mIndexBuffer.position(0);
   }
 
-  public void draw(GL10 gl) {
-    gl.glFrontFace(GL10.GL_CW);
+  public void draw() {
+    GLES20.glFrontFace(GLES20.GL_CW);
+    //mVertexBuffer.position(0);
 
-    gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertexBuffer);
-    gl.glColorPointer(4, GL10.GL_FLOAT, 0, mColorBuffer);
+    GLES20.glVertexAttribPointer(0, 3, GLES20.GL_FLOAT, false,
+        0, mVertexBuffer);
 
-    gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-    gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
+    GLES20.glEnableVertexAttribArray(0);
 
-    gl.glDrawElements(GL10.GL_TRIANGLES, 36, GL10.GL_UNSIGNED_BYTE,
+    // Pass in the color information
+    //mColorBuffer.position(0);
+    GLES20.glVertexAttribPointer(1, 4, GLES20.GL_FLOAT, false,
+        0, mColorBuffer);
+
+    GLES20.glEnableVertexAttribArray(1);
+
+    GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE,
         mIndexBuffer);
-
-    gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-    gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
   }
 }

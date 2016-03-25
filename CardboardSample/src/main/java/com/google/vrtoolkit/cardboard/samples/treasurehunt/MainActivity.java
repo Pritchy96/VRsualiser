@@ -63,29 +63,13 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private static final float MIN_MODEL_DISTANCE = 3.0f;
   private static final float MAX_MODEL_DISTANCE = 7.0f;
 
-  private static final String SOUND_FILE = "cube_sound.wav";
-
   private final float[] lightPosInEyeSpace = new float[4];
 
   private FloatBuffer floorVertices;
   private FloatBuffer floorColors;
   private FloatBuffer floorNormals;
 
-  private FloatBuffer cubeVertices;
-  private FloatBuffer cubeColors;
-  private FloatBuffer cubeFoundColors;
-  private FloatBuffer cubeNormals;
-
-  private int cubeProgram;
   private int floorProgram;
-
-  private int cubePositionParam;
-  private int cubeNormalParam;
-  private int cubeColorParam;
-  private int cubeModelParam;
-  private int cubeModelViewParam;
-  private int cubeModelViewProjectionParam;
-  private int cubeLightPosParam;
 
   private int floorPositionParam;
   private int floorNormalParam;
@@ -101,15 +85,15 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private float[] modelViewProjection;
   private float[] modelView;
   private float[] modelFloor;
-
   private float[] modelPosition;
+  
   private float[] headRotation;
 
   private int score = 0;
   private float objectDistance = MAX_MODEL_DISTANCE / 2.0f;
   private float floorDepth = 20f;
 
-  private Vibrator vibrator;
+  private Cube cube;
   private CardboardOverlayView overlayView;
 
   private CardboardAudioEngine cardboardAudioEngine;
@@ -173,6 +157,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
+    cube = new Cube(10, 10, 10, 1, 1, 1);
     camera = new float[16];
     view = new float[16];
     modelViewProjection = new float[16];
@@ -349,6 +334,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     Matrix.multiplyMM(modelView, 0, view, 0, modelFloor, 0);
     Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
     drawFloor();
+    drawCube();
   }
 
   @Override
@@ -377,6 +363,13 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
 
     checkGLError("drawing floor");
+  }
+
+  public void drawCube() {
+    Matrix.setIdentityM(modelFloor, 0);
+    Matrix.translateM(modelFloor, 0, 0, -floorDepth, 0); // Floor appears below user.
+    cube.draw();
+    checkGLError("drawing cube");
   }
 
   /**
