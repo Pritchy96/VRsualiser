@@ -95,7 +95,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private int floorModelViewProjectionParam;
   private int floorLightPosParam;
 
-  private float[] modelCube;
   private float[] camera;
   private float[] view;
   private float[] headView;
@@ -174,7 +173,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
-    modelCube = new float[16];
     camera = new float[16];
     view = new float[16];
     modelViewProjection = new float[16];
@@ -184,7 +182,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     modelPosition = new float[] {0.0f, 0.0f, -MAX_MODEL_DISTANCE / 2.0f};
     headRotation = new float[4];
     headView = new float[16];
-    vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
     overlayView = (CardboardOverlayView) findViewById(R.id.overlay);
     overlayView.show3DToast("Pull the magnet when you find an object.");
@@ -229,31 +226,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     Log.i(TAG, "onSurfaceCreated");
     GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
 
-    ByteBuffer bbVertices = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COORDS.length * 4);
-    bbVertices.order(ByteOrder.nativeOrder());
-    cubeVertices = bbVertices.asFloatBuffer();
-    cubeVertices.put(WorldLayoutData.CUBE_COORDS);
-    cubeVertices.position(0);
-
-    ByteBuffer bbColors = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COLORS.length * 4);
-    bbColors.order(ByteOrder.nativeOrder());
-    cubeColors = bbColors.asFloatBuffer();
-    cubeColors.put(WorldLayoutData.CUBE_COLORS);
-    cubeColors.position(0);
-
-    ByteBuffer bbFoundColors =
-        ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
-    bbFoundColors.order(ByteOrder.nativeOrder());
-    cubeFoundColors = bbFoundColors.asFloatBuffer();
-    cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
-    cubeFoundColors.position(0);
-
-    ByteBuffer bbNormals = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_NORMALS.length * 4);
-    bbNormals.order(ByteOrder.nativeOrder());
-    cubeNormals = bbNormals.asFloatBuffer();
-    cubeNormals.put(WorldLayoutData.CUBE_NORMALS);
-    cubeNormals.position(0);
-
     // make a floor
     ByteBuffer bbFloorVertices = ByteBuffer.allocateDirect(WorldLayoutData.FLOOR_COORDS.length * 4);
     bbFloorVertices.order(ByteOrder.nativeOrder());
@@ -276,29 +248,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
     int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
     int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
-
-    cubeProgram = GLES20.glCreateProgram();
-    GLES20.glAttachShader(cubeProgram, vertexShader);
-    GLES20.glAttachShader(cubeProgram, passthroughShader);
-    GLES20.glLinkProgram(cubeProgram);
-    GLES20.glUseProgram(cubeProgram);
-
-    checkGLError("Cube program");
-
-    cubePositionParam = GLES20.glGetAttribLocation(cubeProgram, "a_Position");
-    cubeNormalParam = GLES20.glGetAttribLocation(cubeProgram, "a_Normal");
-    cubeColorParam = GLES20.glGetAttribLocation(cubeProgram, "a_Color");
-
-    cubeModelParam = GLES20.glGetUniformLocation(cubeProgram, "u_Model");
-    cubeModelViewParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVMatrix");
-    cubeModelViewProjectionParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVP");
-    cubeLightPosParam = GLES20.glGetUniformLocation(cubeProgram, "u_LightPos");
-
-    GLES20.glEnableVertexAttribArray(cubePositionParam);
-    GLES20.glEnableVertexAttribArray(cubeNormalParam);
-    GLES20.glEnableVertexAttribArray(cubeColorParam);
-
-    checkGLError("Cube program params");
 
     floorProgram = GLES20.glCreateProgram();
     GLES20.glAttachShader(floorProgram, vertexShader);
@@ -326,40 +275,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     Matrix.setIdentityM(modelFloor, 0);
     Matrix.translateM(modelFloor, 0, 0, -floorDepth, 0); // Floor appears below user.
 
-    // Avoid any delays during start-up due to decoding of sound files.
-    new Thread(
-            new Runnable() {
-              public void run() {
-                // Start spatial audio playback of SOUND_FILE at the model postion. The returned
-                //soundId handle is stored and allows for repositioning the sound object whenever
-                // the cube position changes.
-                cardboardAudioEngine.preloadSoundFile(SOUND_FILE);
-                soundId = cardboardAudioEngine.createSoundObject(SOUND_FILE);
-                cardboardAudioEngine.setSoundObjectPosition(
-                    soundId, modelPosition[0], modelPosition[1], modelPosition[2]);
-                cardboardAudioEngine.playSound(soundId, true /* looped playback */);
-              }
-            })
-        .start();
-
-    updateModelPosition();
-
     checkGLError("onSurfaceCreated");
-  }
-
-  /**
-   * Updates the cube model position.
-   */
-  private void updateModelPosition() {
-    Matrix.setIdentityM(modelCube, 0);
-    Matrix.translateM(modelCube, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
-
-    // Update the sound location to match it with the new cube position.
-    if (soundId != CardboardAudioEngine.INVALID_ID) {
-      cardboardAudioEngine.setSoundObjectPosition(
-          soundId, modelPosition[0], modelPosition[1], modelPosition[2]);
-    }
-    checkGLError("updateCubePosition");
   }
 
   /**
@@ -392,8 +308,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
    */
   @Override
   public void onNewFrame(HeadTransform headTransform) {
-    // Build the Model part of the ModelView matrix.
-    Matrix.rotateM(modelCube, 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
 
     // Build the camera matrix and apply it to the ModelView.
     Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
@@ -429,9 +343,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     // Build the ModelView and ModelViewProjection matrices
     // for calculating cube position and light.
     float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
-    Matrix.multiplyMM(modelView, 0, view, 0, modelCube, 0);
     Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
-    drawCube();
 
     // Set modelView for the floor, so we draw floor in the correct location
     Matrix.multiplyMM(modelView, 0, view, 0, modelFloor, 0);
@@ -441,38 +353,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
   @Override
   public void onFinishFrame(Viewport viewport) {}
-
-  /**
-   * Draw the cube.
-   *
-   * <p>We've set all of our transformation matrices. Now we simply pass them into the shader.
-   */
-  public void drawCube() {
-    GLES20.glUseProgram(cubeProgram);
-
-    GLES20.glUniform3fv(cubeLightPosParam, 1, lightPosInEyeSpace, 0);
-
-    // Set the Model in the shader, used to calculate lighting
-    GLES20.glUniformMatrix4fv(cubeModelParam, 1, false, modelCube, 0);
-
-    // Set the ModelView in the shader, used to calculate lighting
-    GLES20.glUniformMatrix4fv(cubeModelViewParam, 1, false, modelView, 0);
-
-    // Set the position of the cube
-    GLES20.glVertexAttribPointer(
-        cubePositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, cubeVertices);
-
-    // Set the ModelViewProjection matrix in the shader.
-    GLES20.glUniformMatrix4fv(cubeModelViewProjectionParam, 1, false, modelViewProjection, 0);
-
-    // Set the normal positions of the cube, again for shading
-    GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, cubeNormals);
-    GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0,
-        isLookingAtObject() ? cubeFoundColors : cubeColors);
-
-    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
-    checkGLError("Drawing cube");
-  }
 
   /**
    * Draw the floor.
@@ -506,48 +386,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   public void onCardboardTrigger() {
     Log.i(TAG, "onCardboardTrigger");
 
-    if (isLookingAtObject()) {
-      score++;
-      overlayView.show3DToast("Found it! Look around for another one.\nScore = " + score);
-      hideObject();
-    } else {
-      overlayView.show3DToast("Look around to find the object!");
-    }
-
-    // Always give user feedback.
-    vibrator.vibrate(50);
   }
 
-  /**
-   * Find a new random position for the object.
-   *
-   * <p>We'll rotate it around the Y-axis so it's out of sight, and then up or down by a little bit.
-   */
-  private void hideObject() {
-    float[] rotationMatrix = new float[16];
-    float[] posVec = new float[4];
-
-    // First rotate in XZ plane, between 90 and 270 deg away, and scale so that we vary
-    // the object's distance from the user.
-    float angleXZ = (float) Math.random() * 180 + 90;
-    Matrix.setRotateM(rotationMatrix, 0, angleXZ, 0f, 1f, 0f);
-    float oldObjectDistance = objectDistance;
-    objectDistance =
-        (float) Math.random() * (MAX_MODEL_DISTANCE - MIN_MODEL_DISTANCE) + MIN_MODEL_DISTANCE;
-    float objectScalingFactor = objectDistance / oldObjectDistance;
-    Matrix.scaleM(rotationMatrix, 0, objectScalingFactor, objectScalingFactor, objectScalingFactor);
-    Matrix.multiplyMV(posVec, 0, rotationMatrix, 0, modelCube, 12);
-
-    float angleY = (float) Math.random() * 80 - 40; // Angle in Y plane, between -40 and 40.
-    angleY = (float) Math.toRadians(angleY);
-    float newY = (float) Math.tan(angleY) * objectDistance;
-
-    modelPosition[0] = posVec[0];
-    modelPosition[1] = newY;
-    modelPosition[2] = posVec[2];
-
-    updateModelPosition();
-  }
 
   /**
    * Check if user is looking at object by calculating where the object is in eye-space.
@@ -559,7 +399,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     float[] objPositionVec = new float[4];
 
     // Convert object space to camera space. Use the headView from onNewFrame.
-    Matrix.multiplyMM(modelView, 0, headView, 0, modelCube, 0);
     Matrix.multiplyMV(objPositionVec, 0, modelView, 0, initVec, 0);
 
     float pitch = (float) Math.atan2(objPositionVec[1], -objPositionVec[2]);
