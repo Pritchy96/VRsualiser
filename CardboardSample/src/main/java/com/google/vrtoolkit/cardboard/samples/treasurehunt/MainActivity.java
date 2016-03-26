@@ -75,8 +75,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private int floorNormalParam;
   private int floorColorParam, cubeColorParam;
   private int floorModelParam;
-  private int floorModelViewParam;
-  private int floorModelViewProjectionParam, cubeModelViewProjectionParam;
+  private int floorModelViewParam, cubeModelViewParam;
+  private int floorModelViewProjectionParam;
   private int floorLightPosParam;
 
   private float[] camera;
@@ -157,7 +157,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
-    cube = new Cube(-1, -1, -1, 1, 1, 1);
+    cube = new Cube(5, 5, 5, 1, 1, 1);
     camera = new float[16];
     view = new float[16];
     modelViewProjection = new float[16];
@@ -247,7 +247,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     cubePositionParam = GLES20.glGetAttribLocation(cubeProgram, "a_Position");
     cubeColorParam = GLES20.glGetAttribLocation(cubeProgram, "a_Color");
-    cubeModelViewProjectionParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVP");
+    cubeModelViewParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVP");
 
     GLES20.glEnableVertexAttribArray(cubePositionParam);
     GLES20.glEnableVertexAttribArray(cubeColorParam);
@@ -387,7 +387,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
   public void drawCube() {
     GLES20.glUseProgram(cubeProgram);
-    cube.draw(cubePositionParam, cubeColorParam, cubeModelViewProjectionParam, modelViewProjection);
+    cube.draw(cubePositionParam, cubeColorParam, cubeModelViewParam, modelViewProjection);
     checkGLError("drawing cube");
   }
 
