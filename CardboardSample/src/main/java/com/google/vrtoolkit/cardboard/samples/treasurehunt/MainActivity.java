@@ -69,14 +69,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private FloatBuffer floorColors;
   private FloatBuffer floorNormals;
 
-  private int floorProgram;
+  private int floorProgram, cubeProgram;
 
-  private int floorPositionParam;
+  private int floorPositionParam, cubePositionParam;
   private int floorNormalParam;
-  private int floorColorParam;
+  private int floorColorParam, cubeColorParam;
   private int floorModelParam;
   private int floorModelViewParam;
-  private int floorModelViewProjectionParam;
+  private int floorModelViewProjectionParam, cubeModelViewProjectionParam;
   private int floorLightPosParam;
 
   private float[] camera;
@@ -157,7 +157,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
-    cube = new Cube(10, 10, 10, 1, 1, 1);
+    cube = new Cube(-1, -1, -1, 1, 1, 1);
     camera = new float[16];
     view = new float[16];
     modelViewProjection = new float[16];
@@ -230,13 +230,32 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     floorColors.put(WorldLayoutData.FLOOR_COLORS);
     floorColors.position(0);
 
-    int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
-    int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
+    int floorVertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
+    int floorFragShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
     int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
+    int cubeVertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.basic_vertex);
+    int cubeFragShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.basic_fragment);
+
+
+
+    cubeProgram = GLES20.glCreateProgram();
+    GLES20.glAttachShader(cubeProgram, cubeVertexShader);
+    GLES20.glAttachShader(cubeProgram, cubeFragShader);
+    GLES20.glLinkProgram(cubeProgram);
+    GLES20.glUseProgram(cubeProgram);
+    checkGLError("Cube program init");
+
+    cubePositionParam = GLES20.glGetAttribLocation(cubeProgram, "a_Position");
+    cubeColorParam = GLES20.glGetAttribLocation(cubeProgram, "a_Color");
+    cubeModelViewProjectionParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVP");
+
+    GLES20.glEnableVertexAttribArray(cubePositionParam);
+    GLES20.glEnableVertexAttribArray(cubeColorParam);
+    checkGLError("Cube program perams");
 
     floorProgram = GLES20.glCreateProgram();
-    GLES20.glAttachShader(floorProgram, vertexShader);
-    GLES20.glAttachShader(floorProgram, gridShader);
+    GLES20.glAttachShader(floorProgram, floorVertexShader);
+    GLES20.glAttachShader(floorProgram, floorFragShader);
     GLES20.glLinkProgram(floorProgram);
     GLES20.glUseProgram(floorProgram);
 
@@ -250,6 +269,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     floorPositionParam = GLES20.glGetAttribLocation(floorProgram, "a_Position");
     floorNormalParam = GLES20.glGetAttribLocation(floorProgram, "a_Normal");
     floorColorParam = GLES20.glGetAttribLocation(floorProgram, "a_Color");
+
 
     GLES20.glEnableVertexAttribArray(floorPositionParam);
     GLES20.glEnableVertexAttribArray(floorNormalParam);
@@ -366,9 +386,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   }
 
   public void drawCube() {
-    Matrix.setIdentityM(modelFloor, 0);
-    Matrix.translateM(modelFloor, 0, 0, -floorDepth, 0); // Floor appears below user.
-    cube.draw();
+    GLES20.glUseProgram(cubeProgram);
+    cube.draw(cubePositionParam, cubeColorParam, cubeModelViewProjectionParam, modelViewProjection);
     checkGLError("drawing cube");
   }
 

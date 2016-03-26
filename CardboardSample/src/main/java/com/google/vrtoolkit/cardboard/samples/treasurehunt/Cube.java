@@ -70,21 +70,26 @@ public class Cube {
     mIndexBuffer.position(0);
   }
 
-  public void draw() {
-    GLES20.glFrontFace(GLES20.GL_CW);
+  public void draw(int cubePositionParam, int cubeColorParam, int cubeModelViewProjectionParam,
+                   float[] modelViewProjection) {
+
+    //GLES20.glVertexAttribPointer(floorNormalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
+    //GLES20.glVertexAttribPointer(floorColorParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
+
+
+    GLES20.glUniformMatrix4fv(cubeModelViewProjectionParam, 1, false, modelViewProjection, 0);
+
+    GLES20.glFrontFace(GLES20.GL_CCW);
     //mVertexBuffer.position(0);
 
-    GLES20.glVertexAttribPointer(0, 3, GLES20.GL_FLOAT, false,
+    GLES20.glVertexAttribPointer(cubePositionParam, 3, GLES20.GL_FLOAT, false,
         0, mVertexBuffer);
 
-    GLES20.glEnableVertexAttribArray(0);
-
     // Pass in the color information
-    //mColorBuffer.position(0);
-    GLES20.glVertexAttribPointer(1, 4, GLES20.GL_FLOAT, false,
+   // mColorBuffer.position(0);
+    GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false,
         0, mColorBuffer);
 
-    GLES20.glEnableVertexAttribArray(1);
 
     GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE,
         mIndexBuffer);
