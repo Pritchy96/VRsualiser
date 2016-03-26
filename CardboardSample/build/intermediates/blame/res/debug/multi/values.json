@@ -1,6 +1,6 @@
 [
     {
-        "outputFile": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\values\\values.xml",
+        "outputFile": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\values\\values.xml",
         "map": [
             {
                 "to": {
@@ -11,7 +11,7 @@
                     "endOffset": 104
                 },
                 "from": {
-                    "file": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\src\\main\\res\\values\\strings.xml",
+                    "file": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\values\\strings.xml",
                     "position": {
                         "startLine": 2,
                         "startColumn": 4,

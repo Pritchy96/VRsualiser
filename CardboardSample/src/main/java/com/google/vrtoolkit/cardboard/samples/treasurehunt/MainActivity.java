@@ -21,7 +21,6 @@ import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.Eye;
 import com.google.vrtoolkit.cardboard.HeadTransform;
 import com.google.vrtoolkit.cardboard.Viewport;
-import com.google.vrtoolkit.cardboard.audio.CardboardAudioEngine;
 
 import android.opengl.GLES20;
 import android.opengl.Matrix;
@@ -67,12 +66,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private FloatBuffer floorColors;
   private FloatBuffer floorNormals;
 
-  private int renderProgram, cubeProgram;
+  private int renderProgram;
 
-  private int positionParam;
-  private int NormalParam;
+  private int vertexParam;
+  private int normalParam;
   private int colorParam;
-  private int modelParam;
+  private int modelLocalParam;
   private int modelViewParam;
   private int modelViewProjectionParam;
   private int lightPosParam;
@@ -91,9 +90,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
   private Cube cube;
   private CardboardOverlayView overlayView;
-
-  private CardboardAudioEngine cardboardAudioEngine;
-  private volatile int soundId = CardboardAudioEngine.INVALID_ID;
 
   /**
    * Converts a raw text file, saved as a resource, into an OpenGL ES shader.
@@ -153,7 +149,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
-    cube = new Cube(1, 1, 1, 3, 3, 10);
     camera = new float[16];
     view = new float[16];
     modelViewProjection = new float[16];
@@ -164,27 +159,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     overlayView = (CardboardOverlayView) findViewById(R.id.overlay);
     overlayView.show3DToast("Pull the magnet when you find an object.");
-
-    // Initialize 3D audio engine.
-    cardboardAudioEngine =
-        new CardboardAudioEngine(getAssets(), CardboardAudioEngine.RenderingQuality.HIGH);
-  }
-
-  @Override
-  public void onPause() {
-    cardboardAudioEngine.pause();
-    super.onPause();
-  }
-
-  @Override
-  public void onResume() {
-    super.onResume();
-    cardboardAudioEngine.resume();
-  }
-
-  @Override
-  public void onRendererShutdown() {
-    Log.i(TAG, "onRendererShutdown");
   }
 
   @Override
@@ -237,17 +211,17 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     checkGLError("Render program init");
 
-    modelParam = GLES20.glGetUniformLocation(renderProgram, "u_Model");
+    modelLocalParam = GLES20.glGetUniformLocation(renderProgram, "u_Model");
     modelViewParam = GLES20.glGetUniformLocation(renderProgram, "u_MVMatrix");
     modelViewProjectionParam = GLES20.glGetUniformLocation(renderProgram, "u_MVP");
     lightPosParam = GLES20.glGetUniformLocation(renderProgram, "u_LightPos");
 
-    positionParam = GLES20.glGetAttribLocation(renderProgram, "a_Position");
-    NormalParam = GLES20.glGetAttribLocation(renderProgram, "a_Normal");
+    vertexParam = GLES20.glGetAttribLocation(renderProgram, "a_Position");
+    normalParam = GLES20.glGetAttribLocation(renderProgram, "a_Normal");
     colorParam = GLES20.glGetAttribLocation(renderProgram, "a_Color");
 
-    GLES20.glEnableVertexAttribArray(positionParam);
-    GLES20.glEnableVertexAttribArray(NormalParam);
+    GLES20.glEnableVertexAttribArray(vertexParam);
+    GLES20.glEnableVertexAttribArray(normalParam);
     GLES20.glEnableVertexAttribArray(colorParam);
 
     checkGLError("Render program params");
@@ -255,8 +229,29 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     Matrix.setIdentityM(modelLocal, 0);
     Matrix.translateM(modelLocal, 0, 0, -floorDepth, 0); // Floor appears below user.
 
+
+    cube = new Cube(1, 1, 1 , new float[]{0, 0, -objectDistance * 0f});
+    checkGLError("cube init");
+
     checkGLError("onSurfaceCreated");
   }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+  }
+
+  @Override
+  public void onRendererShutdown() {
+    Log.i(TAG, "onRendererShutdown");
+  }
+
+
 
   /**
    * Converts a raw text file into a string.
@@ -296,8 +291,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     // Update the 3d audio engine with the most recent head rotation.
     headTransform.getQuaternion(headRotation, 0);
-    cardboardAudioEngine.setHeadRotation(
-        headRotation[0], headRotation[1], headRotation[2], headRotation[3]);
 
     checkGLError("onReadyToDraw");
   }
@@ -320,6 +313,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     // Set the position of the light
     Matrix.multiplyMV(lightPosInEyeSpace, 0, view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
 
+
     // Build the ModelView and ModelViewProjection matrices
     // for calculating cube position and light.
     float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
@@ -331,7 +325,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     GLES20.glUseProgram(renderProgram);
     drawFloor();
-    drawCube();
+    drawCube(perspective);
   }
 
   @Override
@@ -348,11 +342,11 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     // Set ModelView, MVP, position, normals, and color.
     GLES20.glUniform3fv(lightPosParam, 1, lightPosInEyeSpace, 0);
-    GLES20.glUniformMatrix4fv(modelParam, 1, false, modelLocal, 0);
+    GLES20.glUniformMatrix4fv(modelLocalParam, 1, false, modelLocal, 0);
     GLES20.glUniformMatrix4fv(modelViewParam, 1, false, modelView, 0);
     GLES20.glUniformMatrix4fv(modelViewProjectionParam, 1, false, modelViewProjection, 0);
-    GLES20.glVertexAttribPointer(positionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, floorVertices);
-    GLES20.glVertexAttribPointer(NormalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
+    GLES20.glVertexAttribPointer(vertexParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, floorVertices);
+    GLES20.glVertexAttribPointer(normalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
     GLES20.glVertexAttribPointer(colorParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
 
     GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
@@ -360,11 +354,11 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     checkGLError("drawing floor");
   }
 
-  public void drawCube() {
-    cube.draw(lightPosParam, modelParam, modelViewParam, modelViewProjectionParam,
-         positionParam, colorParam, lightPosInEyeSpace, modelView, modelViewProjection);
+  public void drawCube(float[] perspective) {
+    cube.draw(lightPosParam, modelLocalParam, modelViewParam, modelViewProjectionParam,
+        vertexParam, colorParam, lightPosInEyeSpace, view, perspective);
     checkGLError("drawing cube");
-  }
+    }
 
   /**
    * Called when the Cardboard trigger is pulled.

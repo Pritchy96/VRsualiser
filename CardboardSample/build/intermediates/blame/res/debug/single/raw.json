@@ -1,22 +1,22 @@
 [
     {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\light_vertex.shader",
-        "source": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\src\\main\\res\\raw\\light_vertex.shader"
+        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\basic_vertex.shader",
+        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\raw\\basic_vertex.shader"
     },
     {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\grid_fragment.shader",
-        "source": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\src\\main\\res\\raw\\grid_fragment.shader"
+        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\basic_fragment.shader",
+        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\raw\\basic_fragment.shader"
     },
     {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\basic_fragment.shader",
-        "source": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\src\\main\\res\\raw\\basic_fragment.shader"
+        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\passthrough_fragment.shader",
+        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\raw\\passthrough_fragment.shader"
     },
     {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\passthrough_fragment.shader",
-        "source": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\src\\main\\res\\raw\\passthrough_fragment.shader"
+        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\light_vertex.shader",
+        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\raw\\light_vertex.shader"
     },
     {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\basic_vertex.shader",
-        "source": "C:\\Users\\Tom\\Documents\\git\\cardboard-java\\CardboardSample\\src\\main\\res\\raw\\basic_vertex.shader"
+        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\raw\\grid_fragment.shader",
+        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\raw\\grid_fragment.shader"
     }
 ]

@@ -1,6 +1,8 @@
 package com.google.vrtoolkit.cardboard.samples.treasurehunt;
 
 import android.opengl.GLES20;
+import android.opengl.Matrix;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -12,6 +14,7 @@ public class Cube {
 
   private FloatBuffer verticesBuf, colourBuf;
   private ByteBuffer indexBuf;
+  private float[] modelLocal, modelView, modelViewProjection;
 
   private float vertices[] = {};
 
@@ -35,18 +38,17 @@ public class Cube {
       3, 0, 1, 3, 1, 2
   };
 
-  public Cube(float x, float y, float z, float width,
-              float height, float depth) {
+  public Cube(float width,float height, float depth, float[] localPosition) {
 
     vertices = new float[]{
-        x,         y,          z,
-        x + width, y,          z,
-        x + width, y + height, z,
-        x,         y + height, z,
-        x,         y,           z + depth,
-        x + width, y,           z + depth,
-        x + width, y + height,  z + depth,
-        x,         y + height,  z + depth
+        0,         0,          0,
+        0 + width, 0,          0,
+        0 + width, 0 + height, 0,
+        0,         0 + height, 0,
+        0,         0,           0 + depth,
+        0 + width, 0,           0 + depth,
+        0 + width, 0 + height,  0 + depth,
+        0,         0 + height,  0 + depth
     };
 
 
@@ -67,19 +69,32 @@ public class Cube {
     indexBuf.position(0);
 
     modelLocal = new float[16];
+    modelView = new float[16];
+    modelViewProjection = new float[16];
+
+    updateModelPosition(localPosition);
   }
 
-  private float[] modelLocal;
+  /**
+   * Updates the cube model position.
+   */
+  private void updateModelPosition(float modelPosition[]) {
+    Matrix.setIdentityM(modelLocal, 0);
+    Matrix.translateM(modelLocal, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
+  }
 
-  public void draw(int lightPosParam, int modelParam, int modelViewParam,
-                   int modelViewProjectionParam, int positionParam, int colorParam,
-                   float[] lightPosInEyeSpace, float[] modelView, float[] modelViewProjection) {
+  public void draw(int lightPosParam, int modelLocalParam, int modelViewParam,
+                   int modelViewProjectionParam, int vertexParam, int colorParam,
+                   float[] lightPosInEyeSpace, float[] view, float[] perspective) {
+
+    Matrix.multiplyMM(modelView, 0, view, 0, modelLocal, 0);
+    Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
 
     // Set ModelView, MVP, //position, normals, and color.
     GLES20.glUniform3fv(lightPosParam, 1, lightPosInEyeSpace, 0);
 
     //Converts Model Space (I.E (0, 0, 0) == object center) to world Space (Everything relative to some arbitrary 0, 0, 0)
-    GLES20.glUniformMatrix4fv(modelParam, 1, false, modelLocal, 0);
+    GLES20.glUniformMatrix4fv(modelLocalParam, 1, false, modelLocal, 0);
 
     //Converts World space to view Space, 'such a way that each coordinate is as seen from the camera or viewer's point of view.'
     GLES20.glUniformMatrix4fv(modelViewParam, 1, false, modelView, 0);
@@ -88,12 +103,11 @@ public class Cube {
     GLES20.glUniformMatrix4fv(modelViewProjectionParam, 1, false, modelViewProjection, 0);
 
     //Position, normals, and color.
-    GLES20.glVertexAttribPointer(positionParam, 3, GLES20.GL_FLOAT, false, 0, verticesBuf);
+    GLES20.glVertexAttribPointer(vertexParam, 3, GLES20.GL_FLOAT, false, 0, verticesBuf);
     //GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, cubeNormals);
     GLES20.glVertexAttribPointer(colorParam, 4, GLES20.GL_FLOAT, false, 0, colourBuf);
 
-    GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE,
-        indexBuf);
+    GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE, indexBuf);
   }
 
   public float[] getModelLocal() {
