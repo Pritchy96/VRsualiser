@@ -1,20 +1,17 @@
 package com.google.vrtoolkit.cardboard.samples.treasurehunt;
 
 import android.opengl.GLES20;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-
-import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Created by Tom on 25/03/2016.
  */
 public class Cube {
-  private FloatBuffer mVertexBuffer;
-  private FloatBuffer mColorBuffer;
-  private ByteBuffer mIndexBuffer;
+
+  private FloatBuffer verticesBuf, colourBuf;
+  private ByteBuffer indexBuf;
 
   private float vertices[] = {};
 
@@ -55,43 +52,57 @@ public class Cube {
 
     ByteBuffer byteBuf = ByteBuffer.allocateDirect(vertices.length * 4);
     byteBuf.order(ByteOrder.nativeOrder());
-    mVertexBuffer = byteBuf.asFloatBuffer();
-    mVertexBuffer.put(vertices);
-    mVertexBuffer.position(0);
+    verticesBuf = byteBuf.asFloatBuffer();
+    verticesBuf.put(vertices);
+    verticesBuf.position(0);
 
     byteBuf = ByteBuffer.allocateDirect(colors.length * 4);
     byteBuf.order(ByteOrder.nativeOrder());
-    mColorBuffer = byteBuf.asFloatBuffer();
-    mColorBuffer.put(colors);
-    mColorBuffer.position(0);
+    colourBuf = byteBuf.asFloatBuffer();
+    colourBuf.put(colors);
+    colourBuf.position(0);
 
-    mIndexBuffer = ByteBuffer.allocateDirect(indices.length);
-    mIndexBuffer.put(indices);
-    mIndexBuffer.position(0);
+    indexBuf = ByteBuffer.allocateDirect(indices.length);
+    indexBuf.put(indices);
+    indexBuf.position(0);
+
+    modelLocal = new float[16];
   }
 
-  public void draw(int cubePositionParam, int cubeColorParam, int cubeModelViewParam,
-                   float[] modelViewProjection) {
+  private float[] modelLocal;
 
-    //GLES20.glVertexAttribPointer(floorNormalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
-    //GLES20.glVertexAttribPointer(floorColorParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
+  public void draw(int lightPosParam, int modelParam, int modelViewParam,
+                   int modelViewProjectionParam, int positionParam, int colorParam,
+                   float[] lightPosInEyeSpace, float[] modelView, float[] modelViewProjection) {
 
+    // Set ModelView, MVP, //position, normals, and color.
+    GLES20.glUniform3fv(lightPosParam, 1, lightPosInEyeSpace, 0);
 
-    GLES20.glUniformMatrix4fv(cubeModelViewParam, 1, false, modelViewProjection, 0);
+    //Converts Model Space (I.E (0, 0, 0) == object center) to world Space (Everything relative to some arbitrary 0, 0, 0)
+    GLES20.glUniformMatrix4fv(modelParam, 1, false, modelLocal, 0);
 
-    GLES20.glFrontFace(GLES20.GL_CCW);
-    //mVertexBuffer.position(0);
+    //Converts World space to view Space, 'such a way that each coordinate is as seen from the camera or viewer's point of view.'
+    GLES20.glUniformMatrix4fv(modelViewParam, 1, false, modelView, 0);
 
-    GLES20.glVertexAttribPointer(cubePositionParam, 3, GLES20.GL_FLOAT, false,
-        0, mVertexBuffer);
+    //Converts view space to clip space, i.e adding perspective. No, I have no idea either.
+    GLES20.glUniformMatrix4fv(modelViewProjectionParam, 1, false, modelViewProjection, 0);
 
-    // Pass in the color information
-   // mColorBuffer.position(0);
-    GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false,
-        0, mColorBuffer);
-
+    //Position, normals, and color.
+    GLES20.glVertexAttribPointer(positionParam, 3, GLES20.GL_FLOAT, false, 0, verticesBuf);
+    //GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, cubeNormals);
+    GLES20.glVertexAttribPointer(colorParam, 4, GLES20.GL_FLOAT, false, 0, colourBuf);
 
     GLES20.glDrawElements(GLES20.GL_TRIANGLES, 36, GLES20.GL_UNSIGNED_BYTE,
-        mIndexBuffer);
+        indexBuf);
+  }
+
+  public float[] getModelLocal() {
+    return modelLocal;
+  }
+
+  public void setModelLocal(float[] modelLocal) {
+    this.modelLocal = modelLocal;
   }
 }
+
+
