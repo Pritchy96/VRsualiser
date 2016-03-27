@@ -16,6 +16,8 @@
 
 package com.google.vrtoolkit.cardboard.hexistudios.vrsualiser;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
@@ -37,7 +39,9 @@ import java.io.InputStreamReader;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
+
 public class MainActivity extends CardboardActivity implements CardboardView.StereoRenderer {
+
   private static final String TAG = "MainActivity";
 
   private static final float Z_NEAR = 0.1f;
@@ -115,9 +119,11 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+
     setContentView(R.layout.common_ui);
     CardboardView cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
     cardboardView.setRestoreGLStateEnabled(false);
+    cardboardView.setEGLConfigChooser(8 , 8, 8, 8, 16, 0);
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
@@ -149,6 +155,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   @Override
   public void onSurfaceCreated(EGLConfig config) {
     Log.i(TAG, "onSurfaceCreated");
+
     GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
 
     int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);

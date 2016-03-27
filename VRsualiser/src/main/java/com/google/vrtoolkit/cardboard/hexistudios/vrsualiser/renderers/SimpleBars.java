@@ -9,7 +9,7 @@ import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.Cube;
 public class SimpleBars extends Renderer {
 
   Cube[] barCubes;
-  private int maxBarNum, numOfBars, maxBarHeight, divisions = 16;
+  private int maxBarNum, numOfBars, maxBarHeight, divisions = 4;
 
 
   public SimpleBars(RenderParams renderParams) {

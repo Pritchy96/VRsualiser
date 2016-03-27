@@ -1,10 +1,6 @@
 [
     {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\VRsualiser\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4\\ic_launcher.png",
-        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\VRsualiser\\src\\main\\res\\drawable-xxhdpi\\ic_launcher.png"
-    },
-    {
-        "merged": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4\\ic_launcher.png",
-        "source": "C:\\Users\\Tom\\Documents\\git\\android-cardboard-test\\CardboardSample\\src\\main\\res\\drawable-xxhdpi\\ic_launcher.png"
+        "merged": "C:\\Users\\Tom\\Documents\\git\\VRsualiser\\VRsualiser\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4\\ic_launcher.png",
+        "source": "C:\\Users\\Tom\\Documents\\git\\VRsualiser\\VRsualiser\\src\\main\\res\\drawable-xxhdpi\\ic_launcher.png"
     }
 ]
