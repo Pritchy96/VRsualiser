@@ -64,6 +64,19 @@ public class Cube extends RenderItem {
     indexBuf.position(0);
   }
 
+  public void setHeight(float newHeight) {
+    vertices[7] = newHeight;
+    vertices[10] = newHeight;
+    vertices[19] = newHeight;
+    vertices[22] = newHeight;
+
+    ByteBuffer byteBuf = ByteBuffer.allocateDirect(vertices.length * 4);
+    byteBuf.order(ByteOrder.nativeOrder());
+    vertexBuf = byteBuf.asFloatBuffer();
+    vertexBuf.put(vertices);
+    vertexBuf.position(0);
+  }
+
   @Override
   public boolean redraw(float[] lightPosInEyeSpace, float[] view, float[] perspective) {
     super.redraw(lightPosInEyeSpace, view, perspective);

@@ -19,7 +19,7 @@ public class Analyser {
   public Analyser(Renderer renderer) {
     this.renderer = renderer;
 
-    renderer.setup(new Object[]{40, 200});
+    renderer.setup(new Object[]{Visualizer.getCaptureSizeRange()[1], 256});
 
     //Setup the visualiser, choosing whether to use audio from another app or microphone.
     setupVisualiser(false, true, true); //True: Use microphone, collect waveform data, convert to fft.
@@ -62,7 +62,6 @@ public class Analyser {
     }
 
     visualiser.setCaptureSize(Visualizer.getCaptureSizeRange()[1]); //Set capture size to max.
-    System.out.println(Visualizer.getCaptureSizeRange()[1]);
 
     //Setup listener to fill bytes with waveform/fft data every sampleRate time.
     visualiser.setDataCaptureListener(
