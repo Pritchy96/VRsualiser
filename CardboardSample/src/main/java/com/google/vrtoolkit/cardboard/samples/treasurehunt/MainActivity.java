@@ -21,6 +21,7 @@ import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.Eye;
 import com.google.vrtoolkit.cardboard.HeadTransform;
 import com.google.vrtoolkit.cardboard.Viewport;
+import com.google.vrtoolkit.cardboard.samples.treasurehunt.render_items.Cube;
 
 import android.opengl.GLES20;
 import android.opengl.Matrix;
@@ -34,12 +35,10 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
-/**
- * A Cardboard sample application.
- */
 public class MainActivity extends CardboardActivity implements CardboardView.StereoRenderer {
   private static final String TAG = "MainActivity";
 
@@ -47,12 +46,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private static final float Z_FAR = 100.0f;
 
   private static final float CAMERA_Z = 0.01f;
-  private static final float TIME_DELTA = 0.3f;
 
   private static final float YAW_LIMIT = 0.12f;
   private static final float PITCH_LIMIT = 0.12f;
-
-  private static final int COORDS_PER_VERTEX = 3;
 
   // We keep the light always position just above the user.
   private static final float[] LIGHT_POS_IN_WORLD_SPACE = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
@@ -60,24 +56,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private static final float MIN_MODEL_DISTANCE = 3.0f;
   private static final float MAX_MODEL_DISTANCE = 7.0f;
 
-  private final float[] lightPosInEyeSpace = new float[4];
-
   private FloatBuffer floorVertices;
   private FloatBuffer floorColors;
   private FloatBuffer floorNormals;
 
   private int renderProgram;
 
-  private int vertexParam;
-  private int normalParam;
-  private int colorParam;
-  private int modelLocalParam;
-  private int modelViewParam;
-  private int modelViewProjectionParam;
-  private int lightPosParam;
-
+  private Scene scene;
   private float[] camera;
-  private float[] view;
   private float[] headView;
   private float[] modelViewProjection;
   private float[] modelView;
@@ -88,7 +74,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private float objectDistance = MAX_MODEL_DISTANCE / 2.0f;
   private float floorDepth = 20f;
 
-  private Cube cube;
   private CardboardOverlayView overlayView;
 
   /**
@@ -149,8 +134,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
+    //Init vars.
     camera = new float[16];
-    view = new float[16];
     modelViewProjection = new float[16];
     modelView = new float[16];
     modelLocal = new float[16];
@@ -158,7 +143,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     headView = new float[16];
 
     overlayView = (CardboardOverlayView) findViewById(R.id.overlay);
-    overlayView.show3DToast("Pull the magnet when you find an object.");
+    overlayView.show3DToast("3D Toast example.");
   }
 
   @Override
@@ -211,26 +196,31 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     checkGLError("Render program init");
 
-    modelLocalParam = GLES20.glGetUniformLocation(renderProgram, "u_Model");
-    modelViewParam = GLES20.glGetUniformLocation(renderProgram, "u_MVMatrix");
-    modelViewProjectionParam = GLES20.glGetUniformLocation(renderProgram, "u_MVP");
-    lightPosParam = GLES20.glGetUniformLocation(renderProgram, "u_LightPos");
+    //Set up object to cut down constructor size.
+    RenderParams renderParams = new RenderParams(
+        GLES20.glGetUniformLocation(renderProgram, "u_LightPos"),
+        GLES20.glGetUniformLocation(renderProgram, "u_Model"),
+        GLES20.glGetUniformLocation(renderProgram, "u_MVMatrix"),
+        GLES20.glGetUniformLocation(renderProgram, "u_MVP"),
+        GLES20.glGetAttribLocation(renderProgram, "a_Position"),
+        GLES20.glGetAttribLocation(renderProgram, "a_Normal"),
+        GLES20.glGetAttribLocation(renderProgram, "a_Color"));
 
-    vertexParam = GLES20.glGetAttribLocation(renderProgram, "a_Position");
-    normalParam = GLES20.glGetAttribLocation(renderProgram, "a_Normal");
-    colorParam = GLES20.glGetAttribLocation(renderProgram, "a_Color");
 
-    GLES20.glEnableVertexAttribArray(vertexParam);
-    GLES20.glEnableVertexAttribArray(normalParam);
-    GLES20.glEnableVertexAttribArray(colorParam);
+    scene = new Scene(renderParams);  //Init scene.
+
+    GLES20.glEnableVertexAttribArray(scene.renderParams.vertexParam);
+    GLES20.glEnableVertexAttribArray(scene.renderParams.normalParam);
+    GLES20.glEnableVertexAttribArray(scene.renderParams.colourParam);
 
     checkGLError("Render program params");
 
     Matrix.setIdentityM(modelLocal, 0);
     Matrix.translateM(modelLocal, 0, 0, -floorDepth, 0); // Floor appears below user.
 
-
-    cube = new Cube(1, 1, 1 , new float[]{0, 0, -objectDistance * 0f});
+    for (int i = 0; i < 10; i++) {
+      scene.add(new Cube(2, 2, 2, new float[]{0, 2*i, -objectDistance * 10f},  scene.renderParams));
+    }
     checkGLError("cube init");
 
     checkGLError("onSurfaceCreated");
@@ -305,27 +295,27 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-    checkGLError("colorParam");
+    checkGLError("colourParam");
 
     // Apply the eye transformation to the camera.
-    Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
+    Matrix.multiplyMM(scene.view, 0, eye.getEyeView(), 0, camera, 0);
 
     // Set the position of the light
-    Matrix.multiplyMV(lightPosInEyeSpace, 0, view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
+    Matrix.multiplyMV(scene.lightPosInEyeSpace, 0, scene.view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
 
 
     // Build the ModelView and ModelViewProjection matrices
     // for calculating cube position and light.
-    float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
-    Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+    scene.perspective = eye.getPerspective(Z_NEAR, Z_FAR);
+    Matrix.multiplyMM(modelViewProjection, 0, scene.perspective, 0, modelView, 0);
 
     // Set modelView for the floor, so we draw floor in the correct location
-    Matrix.multiplyMM(modelView, 0, view, 0, modelLocal, 0);
-    Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+    Matrix.multiplyMM(modelView, 0, scene.view, 0, modelLocal, 0);
+    Matrix.multiplyMM(modelViewProjection, 0, scene.perspective, 0, modelView, 0);
 
     GLES20.glUseProgram(renderProgram);
     drawFloor();
-    drawCube(perspective);
+    scene.redraw(); //Render the scene.
   }
 
   @Override
@@ -340,25 +330,26 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
    */
   public void drawFloor() {
 
-    // Set ModelView, MVP, position, normals, and color.
-    GLES20.glUniform3fv(lightPosParam, 1, lightPosInEyeSpace, 0);
-    GLES20.glUniformMatrix4fv(modelLocalParam, 1, false, modelLocal, 0);
-    GLES20.glUniformMatrix4fv(modelViewParam, 1, false, modelView, 0);
-    GLES20.glUniformMatrix4fv(modelViewProjectionParam, 1, false, modelViewProjection, 0);
-    GLES20.glVertexAttribPointer(vertexParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, floorVertices);
-    GLES20.glVertexAttribPointer(normalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
-    GLES20.glVertexAttribPointer(colorParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
+    // Set ModelView, MVP, position, normals, and colour.
+    GLES20.glUniform3fv(scene.renderParams.lightPosParam, 1, scene.lightPosInEyeSpace, 0);
+    checkGLError("LightPos");
+    GLES20.glUniformMatrix4fv(scene.renderParams.modelLocalParam, 1, false, modelLocal, 0);
+    checkGLError("LocalPos");
+    GLES20.glUniformMatrix4fv(scene.renderParams.modelViewParam, 1, false, modelView, 0);
+    checkGLError("VIewPos");
+    GLES20.glUniformMatrix4fv(scene.renderParams.modelViewProjectionParam, 1, false, modelViewProjection, 0);
+    checkGLError("ViewProjPos");
+    GLES20.glVertexAttribPointer(scene.renderParams.vertexParam, 3, GLES20.GL_FLOAT, false, 0, floorVertices);
+    checkGLError("Verts");
+    GLES20.glVertexAttribPointer(scene.renderParams.normalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
+    checkGLError("Normals");
+    GLES20.glVertexAttribPointer(scene.renderParams.colourParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
+    checkGLError("Colour");
 
     GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
 
     checkGLError("drawing floor");
   }
-
-  public void drawCube(float[] perspective) {
-    cube.draw(lightPosParam, modelLocalParam, modelViewParam, modelViewProjectionParam,
-        vertexParam, colorParam, lightPosInEyeSpace, view, perspective);
-    checkGLError("drawing cube");
-    }
 
   /**
    * Called when the Cardboard trigger is pulled.
