@@ -28,6 +28,8 @@ import com.google.vrtoolkit.cardboard.HeadTransform;
 import com.google.vrtoolkit.cardboard.Viewport;
 import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.Cube;
 import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.Plane;
+import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.renderers.Renderer;
+import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.renderers.SimpleBars;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,7 +57,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
   private int renderProgram;
 
-  private Scene scene;
+  private Renderer renderer;
   private float[] camera;
   private float[] headView;
   private float[] headRotation;
@@ -172,20 +174,20 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         GLES20.glGetAttribLocation(renderProgram, "a_Normal"),
         GLES20.glGetAttribLocation(renderProgram, "a_Color"));
 
-    scene = new Scene(renderParams);  //Init scene.
+    renderer = new SimpleBars(renderParams);  //Init scene.
 
-    GLES20.glEnableVertexAttribArray(scene.renderParams.vertexParam);
-    GLES20.glEnableVertexAttribArray(scene.renderParams.normalParam);
-    GLES20.glEnableVertexAttribArray(scene.renderParams.colourParam);
+    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);
+    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.normalParam);
+    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.colourParam);
 
     checkGLError("Render program params");
 
     for (int i = 0; i < 10; i++) {
-      scene.add(new Cube(2, 2, 2, new float[]{0, 2 * i, -objectDistance * 10f}, scene.renderParams));
+      renderer.scene.add(new Cube(2, 2, 2, new float[]{0, 2 * i, -objectDistance * 10f}, renderer.scene.renderParams));
     }
 
     //Floor.
-    scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, scene.renderParams));
+    renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, renderer.scene.renderParams));
     checkGLError("objects created");
 
     checkGLError("onSurfaceCreated");
@@ -261,18 +263,18 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     checkGLError("colourParam");
 
     // Apply the eye transformation to the camera.
-    Matrix.multiplyMM(scene.view, 0, eye.getEyeView(), 0, camera, 0);
+    Matrix.multiplyMM(renderer.scene.view, 0, eye.getEyeView(), 0, camera, 0);
 
     // Set the position of the light
-    Matrix.multiplyMV(scene.lightPosInEyeSpace, 0, scene.view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
+    Matrix.multiplyMV(renderer.scene.lightPosInEyeSpace, 0, renderer.scene.view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
 
 
     // Build the ModelView and ModelViewProjection matrices
     // for calculating cube position and light.
-    scene.perspective = eye.getPerspective(Z_NEAR, Z_FAR);
+    renderer.scene.perspective = eye.getPerspective(Z_NEAR, Z_FAR);
 
     GLES20.glUseProgram(renderProgram);
-    scene.redraw(); //Render the scene.
+    renderer.render(); //Render the scene.
   }
 
   @Override
