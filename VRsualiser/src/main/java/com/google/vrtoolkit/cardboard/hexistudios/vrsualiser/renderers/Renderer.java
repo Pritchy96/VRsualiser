@@ -14,6 +14,16 @@ public abstract class Renderer {
     scene = new Scene(renderParams);
   }
 
+  public void setup(Object[] params) {}
+
+  public void updateVisualiserWave(byte[] waveBytes) {
+
+  }
+
+  public void updateVisualiserFft(byte[] fftBytes) {
+
+  }
+
   public void render() {
     scene.redraw();
   }

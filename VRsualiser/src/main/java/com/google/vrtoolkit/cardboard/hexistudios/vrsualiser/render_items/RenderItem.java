@@ -19,6 +19,14 @@ public abstract class RenderItem {
   protected FloatBuffer vertexBuf, colourBuf, normalBuf;
   protected ByteBuffer indexBuf;
 
+  public boolean isVisible() {
+    return visible;
+  }
+
+  public void setVisible(boolean visible) {
+    this.visible = visible;
+  }
+
   //
   protected float[] modelLocal, modelView, modelViewProjection;
 

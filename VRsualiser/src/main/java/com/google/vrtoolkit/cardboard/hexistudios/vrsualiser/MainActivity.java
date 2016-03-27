@@ -16,6 +16,7 @@
 
 package com.google.vrtoolkit.cardboard.hexistudios.vrsualiser;
 
+import android.media.AudioManager;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Bundle;
@@ -26,10 +27,8 @@ import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.Eye;
 import com.google.vrtoolkit.cardboard.HeadTransform;
 import com.google.vrtoolkit.cardboard.Viewport;
-import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.Cube;
-import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.Plane;
-import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.renderers.Renderer;
-import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.renderers.SimpleBars;
+import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.*;
+import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.renderers.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -42,7 +41,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   private static final String TAG = "MainActivity";
 
   private static final float Z_NEAR = 0.1f;
-  private static final float Z_FAR = 100.0f;
+  private static final float Z_FAR = 10000.0f;
 
   private static final float CAMERA_Z = 0.01f;
 
@@ -52,19 +51,17 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   // We keep the light always position just above the user.
   private static final float[] LIGHT_POS_IN_WORLD_SPACE = new float[]{0.0f, 2.0f, 0.0f, 1.0f};
 
-  private static final float MIN_MODEL_DISTANCE = 3.0f;
-  private static final float MAX_MODEL_DISTANCE = 7.0f;
 
-  private int renderProgram;
-
-  private Renderer renderer;
   private float[] camera;
   private float[] headView;
   private float[] headRotation;
-  private float objectDistance = MAX_MODEL_DISTANCE / 2.0f;
   private float floorDepth = 20f;
 
+  private int renderProgram;
   private CardboardOverlayView overlayView;
+  private Renderer renderer;
+  private Analyser audioAnalyser;
+
 
   /**
    * Checks if we've had an error inside of OpenGL ES, and if so what that error is.
@@ -124,6 +121,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
+    //Set audio adjustment to Media instead of phone ringing volume.
+    setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
     //Init vars.
     camera = new float[16];
     headRotation = new float[4];
@@ -155,7 +155,6 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     int fragShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
     int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
 
-
     renderProgram = GLES20.glCreateProgram();
     GLES20.glAttachShader(renderProgram, vertexShader);
     GLES20.glAttachShader(renderProgram, fragShader);
@@ -175,6 +174,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         GLES20.glGetAttribLocation(renderProgram, "a_Color"));
 
     renderer = new SimpleBars(renderParams);  //Init scene.
+    audioAnalyser = new Analyser(renderer); //Init Analyser, must be done after renderer.
 
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.normalParam);
@@ -182,19 +182,16 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     checkGLError("Render program params");
 
-    for (int i = 0; i < 10; i++) {
-      renderer.scene.add(new Cube(2, 2, 2, new float[]{0, 2 * i, -objectDistance * 10f}, renderer.scene.renderParams));
-    }
-
     //Floor.
     renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, renderer.scene.renderParams));
-    checkGLError("objects created");
+    checkGLError("floor created");
 
     checkGLError("onSurfaceCreated");
   }
 
   @Override
   public void onPause() {
+    audioAnalyser.onPause(isFinishing());
     super.onPause();
   }
 
@@ -206,6 +203,12 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
   @Override
   public void onRendererShutdown() {
     Log.i(TAG, "onRendererShutdown");
+  }
+
+  @Override
+  public void onDestroy() {
+    audioAnalyser.onDestroy();
+    super.onDestroy();
   }
 
   /**
@@ -257,10 +260,9 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
    */
   @Override
   public void onDrawEye(Eye eye) {
+    checkGLError("Old error caught in onDrawEye");
     GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-
-    checkGLError("colourParam");
 
     // Apply the eye transformation to the camera.
     Matrix.multiplyMM(renderer.scene.view, 0, eye.getEyeView(), 0, camera, 0);
@@ -275,6 +277,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     GLES20.glUseProgram(renderProgram);
     renderer.render(); //Render the scene.
+    checkGLError("Error rendering, caught at highest level.");
   }
 
   @Override
