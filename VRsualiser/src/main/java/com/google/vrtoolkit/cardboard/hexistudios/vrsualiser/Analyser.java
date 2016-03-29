@@ -27,11 +27,13 @@ public class Analyser {
 
   public void onPause(boolean isFinishing) {
     if (isFinishing) {
+      visualiser.setEnabled(false);
       visualiser.release();
     }
   }
 
   public void onDestroy() {
+    visualiser.setEnabled(false);
     visualiser.release();
   }
 

@@ -23,6 +23,10 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.vrtoolkit.cardboard.CardboardActivity;
 import com.google.vrtoolkit.cardboard.CardboardView;
@@ -111,6 +115,34 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     return shader;
   }
 
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater=getMenuInflater();
+    inflater.inflate(R.menu.options, menu);
+    return super.onCreateOptionsMenu(menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.simplebars:
+        changeRenderer(new SimpleBars(renderer.scene.renderParams));
+        return true;
+
+      case R.id.circularbars:
+        changeRenderer(new CircleBars(renderer.scene.renderParams));
+        return true;
+
+      case R.id.test:
+        renderer = new TestRenderer(renderer.scene.renderParams);
+        return true;
+
+      default:
+        renderer = new TestRenderer(renderer.scene.renderParams);
+        return super.onOptionsItemSelected(item);
+    }
+  }
+
   /**
    * Sets the view to our CardboardView and initializes the transformation matrices we will use
    * to render our scene.
@@ -180,7 +212,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         GLES20.glGetAttribLocation(renderProgram, "a_Normal"),
         GLES20.glGetAttribLocation(renderProgram, "a_Color"));
 
-    renderer = new SimpleBars(renderParams);  //Init scene.
+    renderer = new CircleBars(renderParams);  //Init scene.
     audioAnalyser = new Analyser(renderer); //Init Analyser, must be done after renderer.
 
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);
@@ -194,6 +226,23 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     checkGLError("floor created");
 
     checkGLError("onSurfaceCreated");
+  }
+
+  public void changeRenderer(Renderer renderer) {
+    audioAnalyser.onDestroy();
+    th
+
+
+    audioAnalyser = new Analyser(renderer); //Init Analyser, must be done after renderer.
+
+    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);
+    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.normalParam);
+    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.colourParam);
+
+    checkGLError("Render program params");
+
+    //Floor.
+    renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, renderer.scene.renderParams));
   }
 
   @Override
