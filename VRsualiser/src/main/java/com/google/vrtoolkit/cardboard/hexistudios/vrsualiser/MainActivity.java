@@ -230,9 +230,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
   public void changeRenderer(Renderer renderer) {
     audioAnalyser.onDestroy();
-    th
-
-
+    this.renderer = renderer;
     audioAnalyser = new Analyser(renderer); //Init Analyser, must be done after renderer.
 
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);
