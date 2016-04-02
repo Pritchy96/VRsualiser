@@ -155,7 +155,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     setContentView(R.layout.common_ui);
     CardboardView cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
     cardboardView.setRestoreGLStateEnabled(false);
-    cardboardView.setEGLConfigChooser(8 , 8, 8, 8, 16, 0);
+    cardboardView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
     cardboardView.setRenderer(this);
     setCardboardView(cardboardView);
 
@@ -190,8 +190,8 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
 
     GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
 
-    int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
-    int fragShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
+    int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.basic_vertex);
+    int fragShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.basic_fragment);
     int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
 
     renderProgram = GLES20.glCreateProgram();
@@ -222,7 +222,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     checkGLError("Render program params");
 
     //Floor.
-    renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, renderer.scene.renderParams));
+    renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, true, renderer.scene.renderParams));
     checkGLError("floor created");
 
     checkGLError("onSurfaceCreated");
@@ -234,13 +234,14 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     audioAnalyser = new Analyser(renderer); //Init Analyser, must be done after renderer.
 
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);
-    GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.normalParam);
+    //GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.normalParam);
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.colourParam);
+
 
     checkGLError("Render program params");
 
     //Floor.
-    renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, renderer.scene.renderParams));
+    renderer.scene.add(new Plane(200, 0, 200, new float[]{-100, -floorDepth, -100}, true, renderer.scene.renderParams));
   }
 
   @Override

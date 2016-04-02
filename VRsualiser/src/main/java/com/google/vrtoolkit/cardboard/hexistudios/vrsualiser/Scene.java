@@ -27,4 +27,8 @@ public class Scene {
      item.redraw(lightPosInEyeSpace, view, perspective);
     }
   }
+
+  public ArrayList<RenderItem> getRenderArray() {
+    return renderArray;
+  }
 }
