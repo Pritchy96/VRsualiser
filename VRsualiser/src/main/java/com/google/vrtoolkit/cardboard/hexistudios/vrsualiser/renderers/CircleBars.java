@@ -60,6 +60,7 @@ public class CircleBars extends Renderer {
       barCubes[i].setHeight(dbValue);
     }
   }
+
   @Override
   public void render() {
     super.render(); //Draw all visible objects in the object list.

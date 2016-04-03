@@ -122,23 +122,28 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
     return super.onCreateOptionsMenu(menu);
   }
 
-  @Override
+  @Override //Handles user pressing options on the android three line menu.
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
-      case R.id.simplebars:
-        changeRenderer(new SimpleBars(renderer.scene.renderParams));
+      case R.id.simplebars: changeRenderer(new SimpleBars(renderer.scene.renderParams));
         return true;
 
-      case R.id.circularbars:
-        changeRenderer(new CircleBars(renderer.scene.renderParams));
+      case R.id.circularbars: changeRenderer(new CircleBars(renderer.scene.renderParams));
         return true;
 
-      case R.id.test:
-        renderer = new TestRenderer(renderer.scene.renderParams);
+      case R.id.trianglecube2: changeRenderer(new TriangleCube(renderer.scene.renderParams, 1));
         return true;
 
-      default:
-        renderer = new TestRenderer(renderer.scene.renderParams);
+      case R.id.trianglecube4: changeRenderer(new TriangleCube(renderer.scene.renderParams, 2));
+        return true;
+
+      case R.id.trianglecube8: changeRenderer(new TriangleCube(renderer.scene.renderParams, 3));
+        return true;
+
+      case R.id.test: changeRenderer(new TestRenderer(renderer.scene.renderParams));
+        return true;
+
+      default: renderer = new TestRenderer(renderer.scene.renderParams);
         return super.onOptionsItemSelected(item);
     }
   }
@@ -147,6 +152,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
    * Sets the view to our CardboardView and initializes the transformation matrices we will use
    * to render our scene.
    */
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -212,7 +218,7 @@ public class MainActivity extends CardboardActivity implements CardboardView.Ste
         GLES20.glGetAttribLocation(renderProgram, "a_Normal"),
         GLES20.glGetAttribLocation(renderProgram, "a_Color"));
 
-    renderer = new CircleBars(renderParams);  //Init scene.
+    renderer = new TestRenderer(renderParams);  //Init scene.
     audioAnalyser = new Analyser(renderer); //Init Analyser, must be done after renderer.
 
     GLES20.glEnableVertexAttribArray(renderer.scene.renderParams.vertexParam);

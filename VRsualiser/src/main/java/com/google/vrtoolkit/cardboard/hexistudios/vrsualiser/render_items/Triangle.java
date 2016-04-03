@@ -12,6 +12,34 @@ public class Triangle extends RenderItem {
 
   private float vertices[] = {};
 
+  public float[] getVertices() {
+    return vertices;
+  }
+
+  public void setVertices(float[] vertices) {
+    this.vertices = vertices;
+    ByteBuffer vertByteBuf = ByteBuffer.allocateDirect(vertices.length * 4);
+    vertByteBuf.order(ByteOrder.nativeOrder());
+    vertexBuf.clear();
+    vertexBuf = vertByteBuf.asFloatBuffer();
+    vertexBuf.put(vertices);
+    vertexBuf.position(0);
+  }
+
+  public float[] getColors() {
+    return colors;
+  }
+
+  public void setColors(float[] colors) {
+    this.colors = colors;
+    ByteBuffer colourByteBuf = ByteBuffer.allocateDirect(colors.length * 4);
+    colourByteBuf.order(ByteOrder.nativeOrder());
+    colourBuf.clear();
+    colourBuf = colourByteBuf.asFloatBuffer();
+    colourBuf.put(colors);
+    colourBuf.position(0);
+  }
+
   private float colors[] = {};
 
   private byte indices[] = {0, 1, 2};

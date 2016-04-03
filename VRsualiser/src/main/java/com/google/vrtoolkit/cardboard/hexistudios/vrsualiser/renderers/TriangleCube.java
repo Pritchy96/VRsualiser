@@ -6,39 +6,37 @@ import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.render_items.Triang
 import java.util.ArrayList;
 
 /**
- * Digital EQ-like bars.
+ * A cube of flashing triangles.
  */
-public class TestRenderer extends Renderer {
+public class TriangleCube extends Renderer {
   ArrayList<Triangle> faces = new ArrayList<Triangle>();
 
-  public TestRenderer(RenderParams renderParams) {
+  public TriangleCube(RenderParams renderParams, int size) {
     super(renderParams);
 
-
-    float size = 1;
-
-
-    for (int x = (int) -size; x < size; x++) {
-      for (int y = (int) -size; y < size; y++) {
+    //Define triangles. Bit of a mess to read, but it works well.
+    //Easy to understand if drawn out.
+    for (int x = -size; x < size; x++) {
+      for (int y = -size; y < size; y++) {
         faces.add(new Triangle(   //Top1
             new float[]{x, size, y},
             new float[]{x + 1, size, y},
             new float[]{x + 1, size, y + 1},
             scene.renderParams));
 
-        faces.add(new Triangle(
+        faces.add(new Triangle( //Top2
             new float[]{x, size, y},
             new float[]{x, size, y + 1},
             new float[]{x + 1, size, y + 1},
             scene.renderParams));
 
-        faces.add(new Triangle(
+        faces.add(new Triangle( //Bottom1
             new float[]{x + 1, -size, y + 1},
             new float[]{x + 1, -size, y},
             new float[]{x, -size, y},
             scene.renderParams));
 
-        faces.add(new Triangle(
+        faces.add(new Triangle( //Bottom2
             new float[]{x + 1, -size, y + 1},
             new float[]{x, -size, y + 1},
             new float[]{x, -size, y},
@@ -94,88 +92,13 @@ public class TestRenderer extends Renderer {
       }
     }
 
+    //add triangles to scene.
     for (Triangle t : faces) {
       scene.add(t); //Add for rendering.
     }
   }
 
-  /*
-
-    */
-    /*
-        faces.add(new Triangle(   //Top1
-            new float[]{x - 1, -size, y - 1},
-            new float[]{x, -size, y - 1},
-            new float[]{x, -size, y},
-            scene.renderParams));
-
-        faces.add(new Triangle(
-            new float[]{x - 1, -size, y - 1},
-            new float[]{x - 1, -size, y},
-            new float[]{x, -size, y},
-            scene.renderParams));
-
-        bottom1 = new Triangle(
-            new float[]{width, -height, depth},
-            new float[]{width, -height, -depth},
-            new float[]{-width, -height, -depth},
-            scene.renderParams),
-
-        bottom2 = new Triangle(
-            new float[]{width, -height, depth},
-            new float[]{-width, -height, depth},
-            new float[]{-width, -height, -depth},
-            scene.renderParams),
-
-        left1 = new Triangle(
-            new float[]{-width, -height, -depth},
-            new float[]{-width, -height, depth},
-            new float[]{-width, height, -depth},
-            scene.renderParams),
-
-        left2 = new Triangle(
-            new float[]{-width, height, -depth},
-            new float[]{-width, -height, depth},
-            new float[]{-width, height, depth},
-            scene.renderParams),
-
-        right1 = new Triangle(
-            new float[]{width, -height, -depth},
-            new float[]{width, -height, depth},
-            new float[]{width, height, -depth},
-            scene.renderParams),
-
-        right2 = new Triangle(
-            new float[]{width, height, depth},
-            new float[]{width, -height, depth},
-            new float[]{width, height, -depth},
-            scene.renderParams),
-
-        front1 = new Triangle(
-            new float[]{-width, -height, -depth},
-            new float[]{width, -height, -depth},
-            new float[]{-width, height, -depth},
-            scene.renderParams),
-
-        front2 = new Triangle(
-            new float[]{width, height, -depth},
-            new float[]{width, -height, -depth},
-            new float[]{-width, height, -depth},
-            scene.renderParams),
-
-        back1 = new Triangle(
-            new float[]{-width, -height, depth},
-            new float[]{width, -height, depth},
-            new float[]{-width, height, depth},
-            scene.renderParams),
-
-        back2 = new Triangle(
-            new float[]{width, height, depth},
-            new float[]{width, -height, depth},
-            new float[]{-width, height, depth},
-            scene.renderParams);*/
-
-
+  //Convert each vert on a cube to a sphere - google 'quadsphere'
   public float[] spherify(float[] oldVerts) {
     float[] newVerts = new float[oldVerts.length];
 
@@ -191,7 +114,6 @@ public class TestRenderer extends Renderer {
     return newVerts;
   }
 
-
   @Override
   public void updateVisualiserWave(byte[] waveBytes) {
     super.updateVisualiserWave(waveBytes);
@@ -200,36 +122,29 @@ public class TestRenderer extends Renderer {
   @Override
   public void updateVisualiserFft(byte[] fftBytes) {
     super.updateVisualiserFft(fftBytes);
+    int numOfFaces = faces.size();
+    int index = (int)Math.floor(fftBytes.length/numOfFaces);
 
-    int divisions = faces.size();
-    for (int i = 0; i < divisions; i++) {
-
-      Triangle face = faces.get(i);
-
-      int index = (int)Math.floor(fftBytes.length/divisions);
+    for (int i = 0; i < numOfFaces; i++) {
+      Triangle face = faces.get(i); //Get current face
 
       byte rfk = fftBytes[index * i];
       byte ifk = fftBytes[index * i + 1];
       float magnitude = (rfk * rfk + ifk * ifk);
-      float dbValue = (float) (Math.log10(magnitude)/2);
-      System.out.println(dbValue);
-      if (dbValue < 0) {dbValue = 0.5f;} else if (dbValue > 1) { dbValue = 1;}
+      float dbValue = (float)(Math.log10(magnitude)+1/3);  //Temp number massaging to get roughly between 1 and  0.
+      //Hard capping as temp number massaging is far from perfect.
+      if (dbValue < 0) {dbValue = 0.0f;} else if (dbValue > 1) { dbValue = 1;}
 
-      float colours[] = new float[] {
-          (float)0f, (float)dbValue, (float)dbValue, 1.0f,
-          (float)0f, (float)dbValue, (float)dbValue, 1.0f,
-          (float)0f, (float)dbValue, (float)dbValue, 1.0f,
-          (float)0f, (float)dbValue, (float)dbValue, 1.0f
+      float colours[] = new float[] { //Construct new colour array.
+          0f, dbValue, dbValue, 1.0f,
+          0f, dbValue, dbValue, 1.0f,
+          0f, dbValue, dbValue, 1.0f,
+          0f, dbValue, dbValue, 1.0f
       };
 
-      face.setColors(colours);
+      face.setColors(colours);  //Send new colour arya to triangle for processing to colBuffer.
     }
   }
-
-
-
-
-
 
   @Override
   public void render() {
@@ -237,7 +152,7 @@ public class TestRenderer extends Renderer {
   }
 }
 
-/*
+/* OLD spherify method.
   public void spherify(Triangle t) {
     float[] newVerts = new float[t.getVertices().length];
     float[] oldVerts = t.getVertices();

@@ -8,6 +8,15 @@
         android:id="@+id/circularbars"
         android:title="Circular Bars"/>
     <item
+        android:id="@+id/trianglecube2"
+        android:title="Triangle Cube 2x2"/>
+    <item
+        android:id="@+id/trianglecube4"
+        android:title="Triangle Cube 4x4"/>
+    <item
+        android:id="@+id/trianglecube8"
+        android:title="Triangle Cube 8x8"/>
+    <item
         android:id="@+id/test"
         android:title="Test"/>
 </menu>

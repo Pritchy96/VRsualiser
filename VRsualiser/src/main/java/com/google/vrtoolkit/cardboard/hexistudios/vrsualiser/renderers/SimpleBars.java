@@ -48,7 +48,7 @@ public class SimpleBars extends Renderer {
       byte rfk = fftBytes[divisions * i];
       byte ifk = fftBytes[divisions * i + 1];
       float magnitude = (rfk * rfk + ifk * ifk);
-      int dbValue = (int) (10 * Math.log10(magnitude));
+      float dbValue = (float) (10 * Math.log10(magnitude));
       if (dbValue < 0) {dbValue = 0;}
       barCubes[i].setHeight(dbValue);
     }

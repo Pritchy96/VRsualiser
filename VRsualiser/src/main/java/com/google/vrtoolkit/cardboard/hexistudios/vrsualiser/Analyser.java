@@ -4,7 +4,6 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.audiofx.Visualizer;
-
 import com.google.vrtoolkit.cardboard.hexistudios.vrsualiser.renderers.Renderer;
 
 /**
